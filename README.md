@@ -1,4 +1,4 @@
-# SecureViz - Security Vulnerability Dashboard
+# KaiSecurity - Security Vulnerability Dashboard
 
 A modern, high-performance React-based dashboard for visualizing and analyzing security vulnerabilities in software ecosystems. Built to handle large datasets (300MB+) efficiently with advanced filtering, analysis modes, and interactive visualizations.
 

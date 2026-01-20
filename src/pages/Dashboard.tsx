@@ -26,10 +26,11 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { Box, Card, CardContent, Typography, Chip } from "@mui/material";
 import AnalysisModeSelector from "../components/AnalysisModeSelector";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { getCriticalVulnerabilities } from "../utils/filterUtils";
-import "./Dashboard.css";
+import { getSeverityColor } from "../theme";
 
 const SEVERITY_COLORS = {
   critical: "#dc2626",
@@ -235,11 +236,23 @@ function Dashboard() {
 
   if (error) {
     return (
-      <div className="error-container">
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "60vh",
+          gap: 3,
+          color: "text.secondary",
+        }}
+      >
         <AlertCircle size={48} />
-        <h2>Error Loading Data</h2>
-        <p>{error}</p>
-      </div>
+        <Typography variant="h4" color="text.primary">
+          Error Loading Data
+        </Typography>
+        <Typography>{error}</Typography>
+      </Box>
     );
   }
 
@@ -253,279 +266,598 @@ function Dashboard() {
   };
 
   return (
-    <div className="dashboard">
-      <div className="dashboard-header">
-        <div>
-          <h1>Security Dashboard</h1>
-          <p className="subtitle">
+    <Box sx={{ width: "100%" }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          mb: 4,
+          gap: 3,
+          flexDirection: { xs: "column", md: "row" },
+        }}
+      >
+        <Box>
+          <Typography
+            variant="h3"
+            sx={{ fontWeight: 700, mb: 1, fontSize: "2rem" }}
+          >
+            Security Dashboard
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
             Comprehensive vulnerability analysis and insights
-          </p>
-        </div>
+          </Typography>
+        </Box>
         <AnalysisModeSelector />
-      </div>
+      </Box>
 
       {analysisMode.mode !== "all" && (
-        <div className="filter-impact-banner">
-          <div className="impact-content">
-            <Filter className="impact-icon" />
-            <div className="impact-text">
+        <Box
+          sx={{
+            background:
+              "linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(6, 182, 212, 0.1))",
+            border: "1px solid",
+            borderColor: "primary.main",
+            borderRadius: 2,
+            p: 3,
+            mb: 4,
+            animation: "fadeIn 0.3s ease-out",
+            "@keyframes fadeIn": {
+              from: { opacity: 0 },
+              to: { opacity: 1 },
+            },
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Filter style={{ color: "#8b5cf6", flexShrink: 0 }} />
+            <Typography
+              sx={{
+                color: "text.primary",
+                fontSize: "0.9375rem",
+                lineHeight: 1.6,
+              }}
+            >
               <strong>{analysisMode.label}</strong> active - Showing{" "}
               <strong>{stats.totalVulnerabilities.toLocaleString()}</strong> of{" "}
               <strong>{filterImpact.total.toLocaleString()}</strong>{" "}
               vulnerabilities{" "}
-              <span className="impact-percentage">
+              <Box
+                component="span"
+                sx={{ color: "secondary.main", fontWeight: 600 }}
+              >
                 ({filterImpact.percentage}%)
-              </span>
-            </div>
-          </div>
-        </div>
+              </Box>
+            </Typography>
+          </Box>
+        </Box>
       )}
 
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-header">
-            <Shield className="stat-icon" />
-            <span className="stat-label">Total Vulnerabilities</span>
-          </div>
-          <div className="stat-value">
-            {stats.totalVulnerabilities.toLocaleString()}
-          </div>
-          <div className="stat-footer">
-            <span className="stat-detail">
-              {stats.uniqueCVEs.toLocaleString()} unique CVEs
-            </span>
-          </div>
-        </div>
-
-        <div className="stat-card critical-card">
-          <div className="stat-header">
-            <AlertTriangle className="stat-icon" />
-            <span className="stat-label">Critical & High</span>
-          </div>
-          <div className="stat-value">
-            {(stats.criticalCount + stats.highCount).toLocaleString()}
-          </div>
-          <div className="stat-footer">
-            <span className="stat-detail">
-              {stats.criticalCount.toLocaleString()} critical
-            </span>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-header">
-            <Package className="stat-icon" />
-            <span className="stat-label">Affected Packages</span>
-          </div>
-          <div className="stat-value">
-            {stats.uniquePackages.toLocaleString()}
-          </div>
-          <div className="stat-footer">
-            <span className="stat-detail">Across all repositories</span>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-header">
-            <TrendingUp className="stat-icon" />
-            <span className="stat-label">Fix Availability</span>
-          </div>
-          <div className="stat-value">
-            {((stats.withFix / stats.totalVulnerabilities) * 100).toFixed(1)}%
-          </div>
-          <div className="stat-footer">
-            <span className="stat-detail">
-              {stats.withFix.toLocaleString()} have fixes
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <div className="charts-grid">
-        <div className="chart-card interactive-chart">
-          <h3>Severity Distribution</h3>
-          <p className="chart-hint">
-            Click on a segment to filter vulnerabilities
-          </p>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={severityData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, percent }) =>
-                  `${name} ${((percent || 0) * 100).toFixed(0)}%`
-                }
-                outerRadius={100}
-                dataKey="value"
-                onClick={handleSeverityClick}
-                cursor="pointer"
-              >
-                {severityData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="chart-card interactive-chart">
-          <h3>Fix Status</h3>
-          <p className="chart-hint">
-            Click on a bar to filter vulnerabilities (Log scale for better
-            visibility)
-          </p>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={fixStatusData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#3c4257" />
-              <XAxis
-                dataKey="name"
-                stroke="#9aa0a6"
-                angle={-45}
-                textAnchor="end"
-                height={80}
-                fontSize={11}
-              />
-              <YAxis stroke="#9aa0a6" hide />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#1a1f2e",
-                  border: "1px solid #3c4257",
-                  borderRadius: "8px",
-                  color: "#e5e7eb",
-                }}
-                cursor={{ fill: "rgba(139, 92, 246, 0.1)" }}
-                formatter={(
-                  _value: any,
-                  _name: string | undefined,
-                  props: any,
-                ) => {
-                  // Show actual value in tooltip, not the logarithmic value
-                  return [props.payload.displayValue.toLocaleString(), "Count"];
-                }}
-              />
-              <Bar
-                dataKey="visualValue"
-                fill="#8b5cf6"
-                radius={[8, 8, 0, 0]}
-                onClick={handleFixStatusClick}
-                style={{ cursor: "pointer" }}
-                label={(props: any) => {
-                  const { x, y, width, value, index } = props;
-                  const dataItem = fixStatusData[index];
-                  if (!dataItem || value === 0) return null;
-                  return (
-                    <text
-                      x={x + width / 2}
-                      y={y - 5}
-                      fill="#e5e7eb"
-                      textAnchor="middle"
-                      fontSize={10}
-                    >
-                      {dataItem.displayValue.toLocaleString()}
-                    </text>
-                  );
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "1fr",
+            sm: "repeat(auto-fit, minmax(250px, 1fr))",
+          },
+          gap: 3,
+          mb: 4,
+        }}
+      >
+        <Card
+          sx={{
+            transition: "all 0.2s",
+            "&:hover": {
+              borderColor: "primary.main",
+              transform: "translateY(-2px)",
+              boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
+            },
+          }}
+        >
+          <CardContent>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+              <Shield style={{ color: "#8b5cf6" }} />
+              <Typography
+                variant="overline"
+                sx={{
+                  color: "text.secondary",
+                  fontWeight: 500,
+                  letterSpacing: "0.025em",
                 }}
               >
-                {fixStatusData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={entry.color}
-                    style={{ cursor: "pointer" }}
-                  />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="chart-card interactive-chart">
-          <h3>Analysis Status</h3>
-          <p className="chart-hint">Click on a bar to filter vulnerabilities</p>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={kaiAnalysisData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#3c4257" />
-              <XAxis dataKey="name" stroke="#9aa0a6" />
-              <YAxis stroke="#9aa0a6" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#1a1f2e",
-                  border: "1px solid #3c4257",
-                  borderRadius: "8px",
-                  color: "#e5e7eb",
-                }}
-                cursor={{ fill: "rgba(6, 182, 212, 0.1)" }}
-              />
-              <Bar
-                dataKey="value"
-                fill="#06b6d4"
-                radius={[8, 8, 0, 0]}
-                onClick={handleAnalysisStatusClick}
-                style={{ cursor: "pointer" }}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="chart-card interactive-chart">
-          <h3>Vulnerability Trend (Last 12 Months)</h3>
-          <p className="chart-hint">
-            Click on a point to filter vulnerabilities by month
-          </p>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={monthlyTrend} onClick={handleTrendClick}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#3c4257" />
-              <XAxis dataKey="month" stroke="#9aa0a6" />
-              <YAxis stroke="#9aa0a6" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#1a1f2e",
-                  border: "1px solid #3c4257",
-                  borderRadius: "8px",
-                }}
-              />
-              <Line
-                type="monotone"
-                dataKey="count"
-                stroke="#8b5cf6"
-                strokeWidth={2}
-                dot={{ fill: "#8b5cf6", r: 4, cursor: "pointer" }}
-                activeDot={{ r: 6, cursor: "pointer" }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      <div className="critical-section">
-        <h2>Top Critical Vulnerabilities</h2>
-        <div className="critical-list">
-          {criticalVulnerabilities.map((vuln) => (
-            <div
-              key={vuln.id}
-              className="critical-item"
-              onClick={() => navigate(`/vulnerabilities/${vuln.id}`)}
+                Total Vulnerabilities
+              </Typography>
+            </Box>
+            <Typography
+              variant="h3"
+              sx={{
+                fontWeight: 700,
+                mb: 1,
+                fontSize: "2.5rem",
+                fontFeatureSettings: "'tnum'",
+              }}
             >
-              <div className="critical-header">
-                <span className={`badge badge-${vuln.severity}`}>
-                  {vuln.severity}
-                </span>
-                <span className="critical-cve">{vuln.cve}</span>
-                <span className="critical-cvss">CVSS: {vuln.cvss}</span>
-              </div>
-              <div className="critical-package">
+              {stats.totalVulnerabilities.toLocaleString()}
+            </Typography>
+            <Box sx={{ pt: 1, borderTop: "1px solid", borderColor: "divider" }}>
+              <Typography variant="body2" color="text.secondary">
+                {stats.uniqueCVEs.toLocaleString()} unique CVEs
+              </Typography>
+            </Box>
+          </CardContent>
+        </Card>
+
+        <Card
+          sx={{
+            borderColor: "#dc2626",
+            transition: "all 0.2s",
+            "&:hover": {
+              borderColor: "#dc2626",
+              transform: "translateY(-2px)",
+              boxShadow: "0 10px 15px -3px rgba(220, 38, 38, 0.2)",
+            },
+          }}
+        >
+          <CardContent>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+              <AlertTriangle style={{ color: "#dc2626" }} />
+              <Typography
+                variant="overline"
+                sx={{
+                  color: "text.secondary",
+                  fontWeight: 500,
+                  letterSpacing: "0.025em",
+                }}
+              >
+                Critical & High
+              </Typography>
+            </Box>
+            <Typography
+              variant="h3"
+              sx={{
+                fontWeight: 700,
+                mb: 1,
+                fontSize: "2.5rem",
+                fontFeatureSettings: "'tnum'",
+              }}
+            >
+              {(stats.criticalCount + stats.highCount).toLocaleString()}
+            </Typography>
+            <Box sx={{ pt: 1, borderTop: "1px solid", borderColor: "divider" }}>
+              <Typography variant="body2" color="text.secondary">
+                {stats.criticalCount.toLocaleString()} critical
+              </Typography>
+            </Box>
+          </CardContent>
+        </Card>
+
+        <Card
+          sx={{
+            transition: "all 0.2s",
+            "&:hover": {
+              borderColor: "primary.main",
+              transform: "translateY(-2px)",
+              boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
+            },
+          }}
+        >
+          <CardContent>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+              <Package style={{ color: "#8b5cf6" }} />
+              <Typography
+                variant="overline"
+                sx={{
+                  color: "text.secondary",
+                  fontWeight: 500,
+                  letterSpacing: "0.025em",
+                }}
+              >
+                Affected Packages
+              </Typography>
+            </Box>
+            <Typography
+              variant="h3"
+              sx={{
+                fontWeight: 700,
+                mb: 1,
+                fontSize: "2.5rem",
+                fontFeatureSettings: "'tnum'",
+              }}
+            >
+              {stats.uniquePackages.toLocaleString()}
+            </Typography>
+            <Box sx={{ pt: 1, borderTop: "1px solid", borderColor: "divider" }}>
+              <Typography variant="body2" color="text.secondary">
+                Across all repositories
+              </Typography>
+            </Box>
+          </CardContent>
+        </Card>
+
+        <Card
+          sx={{
+            transition: "all 0.2s",
+            "&:hover": {
+              borderColor: "primary.main",
+              transform: "translateY(-2px)",
+              boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
+            },
+          }}
+        >
+          <CardContent>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+              <TrendingUp style={{ color: "#8b5cf6" }} />
+              <Typography
+                variant="overline"
+                sx={{
+                  color: "text.secondary",
+                  fontWeight: 500,
+                  letterSpacing: "0.025em",
+                }}
+              >
+                Fix Availability
+              </Typography>
+            </Box>
+            <Typography
+              variant="h3"
+              sx={{
+                fontWeight: 700,
+                mb: 1,
+                fontSize: "2.5rem",
+                fontFeatureSettings: "'tnum'",
+              }}
+            >
+              {((stats.withFix / stats.totalVulnerabilities) * 100).toFixed(1)}%
+            </Typography>
+            <Box sx={{ pt: 1, borderTop: "1px solid", borderColor: "divider" }}>
+              <Typography variant="body2" color="text.secondary">
+                {stats.withFix.toLocaleString()} have fixes
+              </Typography>
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
+
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "1fr",
+            lg: "repeat(auto-fit, minmax(400px, 1fr))",
+          },
+          gap: 3,
+          mb: 4,
+        }}
+      >
+        <Card
+          sx={{
+            transition: "transform 0.2s ease-out",
+            "&:hover": {
+              transform: "translateY(-2px)",
+              boxShadow: "0 8px 16px rgba(0, 0, 0, 0.3)",
+            },
+          }}
+        >
+          <CardContent>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+              Severity Distribution
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: "0.75rem",
+                color: "#9aa0a6",
+                mb: 2,
+                mt: -0.5,
+                fontStyle: "italic",
+              }}
+            >
+              Click on a segment to filter vulnerabilities
+            </Typography>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={severityData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) =>
+                    `${name} ${((percent || 0) * 100).toFixed(0)}%`
+                  }
+                  outerRadius={100}
+                  dataKey="value"
+                  onClick={handleSeverityClick}
+                  cursor="pointer"
+                >
+                  {severityData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card
+          sx={{
+            transition: "transform 0.2s ease-out",
+            "&:hover": {
+              transform: "translateY(-2px)",
+              boxShadow: "0 8px 16px rgba(0, 0, 0, 0.3)",
+            },
+          }}
+        >
+          <CardContent>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+              Fix Status
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: "0.75rem",
+                color: "#9aa0a6",
+                mb: 2,
+                mt: -0.5,
+                fontStyle: "italic",
+              }}
+            >
+              Click on a bar to filter vulnerabilities (Log scale for better
+              visibility)
+            </Typography>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={fixStatusData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#3c4257" />
+                <XAxis
+                  dataKey="name"
+                  stroke="#9aa0a6"
+                  angle={-45}
+                  textAnchor="end"
+                  height={80}
+                  fontSize={11}
+                />
+                <YAxis stroke="#9aa0a6" hide />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1a1f2e",
+                    border: "1px solid #3c4257",
+                    borderRadius: "8px",
+                    color: "#e5e7eb",
+                  }}
+                  cursor={{ fill: "rgba(139, 92, 246, 0.1)" }}
+                  formatter={(
+                    _value: any,
+                    _name: string | undefined,
+                    props: any,
+                  ) => {
+                    // Show actual value in tooltip, not the logarithmic value
+                    return [
+                      props.payload.displayValue.toLocaleString(),
+                      "Count",
+                    ];
+                  }}
+                />
+                <Bar
+                  dataKey="visualValue"
+                  fill="#8b5cf6"
+                  radius={[8, 8, 0, 0]}
+                  onClick={handleFixStatusClick}
+                  style={{ cursor: "pointer" }}
+                  label={(props: any) => {
+                    const { x, y, width, value, index } = props;
+                    const dataItem = fixStatusData[index];
+                    if (!dataItem || value === 0) return null;
+                    return (
+                      <text
+                        x={x + width / 2}
+                        y={y - 5}
+                        fill="#e5e7eb"
+                        textAnchor="middle"
+                        fontSize={10}
+                      >
+                        {dataItem.displayValue.toLocaleString()}
+                      </text>
+                    );
+                  }}
+                >
+                  {fixStatusData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={entry.color}
+                      style={{ cursor: "pointer" }}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card
+          sx={{
+            transition: "transform 0.2s ease-out",
+            "&:hover": {
+              transform: "translateY(-2px)",
+              boxShadow: "0 8px 16px rgba(0, 0, 0, 0.3)",
+            },
+          }}
+        >
+          <CardContent>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+              Analysis Status
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: "0.75rem",
+                color: "#9aa0a6",
+                mb: 2,
+                mt: -0.5,
+                fontStyle: "italic",
+              }}
+            >
+              Click on a bar to filter vulnerabilities
+            </Typography>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={kaiAnalysisData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#3c4257" />
+                <XAxis dataKey="name" stroke="#9aa0a6" />
+                <YAxis stroke="#9aa0a6" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1a1f2e",
+                    border: "1px solid #3c4257",
+                    borderRadius: "8px",
+                    color: "#e5e7eb",
+                  }}
+                  cursor={{ fill: "rgba(6, 182, 212, 0.1)" }}
+                />
+                <Bar
+                  dataKey="value"
+                  fill="#06b6d4"
+                  radius={[8, 8, 0, 0]}
+                  onClick={handleAnalysisStatusClick}
+                  style={{ cursor: "pointer" }}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card
+          sx={{
+            transition: "transform 0.2s ease-out",
+            "&:hover": {
+              transform: "translateY(-2px)",
+              boxShadow: "0 8px 16px rgba(0, 0, 0, 0.3)",
+            },
+          }}
+        >
+          <CardContent>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+              Vulnerability Trend (Last 12 Months)
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: "0.75rem",
+                color: "#9aa0a6",
+                mb: 2,
+                mt: -0.5,
+                fontStyle: "italic",
+              }}
+            >
+              Click on a point to filter vulnerabilities by month
+            </Typography>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={monthlyTrend} onClick={handleTrendClick}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#3c4257" />
+                <XAxis dataKey="month" stroke="#9aa0a6" />
+                <YAxis stroke="#9aa0a6" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1a1f2e",
+                    border: "1px solid #3c4257",
+                    borderRadius: "8px",
+                  }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="count"
+                  stroke="#8b5cf6"
+                  strokeWidth={2}
+                  dot={{ fill: "#8b5cf6", r: 4, cursor: "pointer" }}
+                  activeDot={{ r: 6, cursor: "pointer" }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </Box>
+
+      <Card sx={{ p: 4 }}>
+        <Typography variant="h5" sx={{ fontWeight: 600, mb: 3 }}>
+          Top Critical Vulnerabilities
+        </Typography>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {criticalVulnerabilities.map((vuln) => (
+            <Box
+              key={vuln.id}
+              onClick={() => navigate(`/vulnerabilities/${vuln.id}`)}
+              sx={{
+                bgcolor: "#252b3b",
+                border: "1px solid",
+                borderColor: "divider",
+                borderRadius: 1.5,
+                p: 3,
+                cursor: "pointer",
+                transition: "all 0.2s",
+                "&:hover": {
+                  borderColor: "primary.main",
+                  transform: "translateX(4px)",
+                  boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                },
+              }}
+            >
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 2,
+                  mb: 1,
+                  flexWrap: "wrap",
+                }}
+              >
+                <Chip
+                  label={vuln.severity}
+                  size="small"
+                  sx={{
+                    bgcolor: getSeverityColor(vuln.severity),
+                    color: "#fff",
+                    fontWeight: 600,
+                    fontSize: "0.75rem",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.025em",
+                  }}
+                />
+                <Typography
+                  sx={{
+                    fontWeight: 600,
+                    color: "text.primary",
+                    fontSize: "0.9375rem",
+                  }}
+                >
+                  {vuln.cve}
+                </Typography>
+                <Typography
+                  sx={{
+                    color: "text.secondary",
+                    fontSize: "0.875rem",
+                    ml: "auto",
+                  }}
+                >
+                  CVSS: {vuln.cvss}
+                </Typography>
+              </Box>
+              <Typography
+                sx={{
+                  color: "secondary.main",
+                  fontSize: "0.875rem",
+                  fontFamily: "'Monaco', 'Courier New', monospace",
+                  mb: 1,
+                }}
+              >
                 {vuln.packageName}@{vuln.packageVersion}
-              </div>
-              <div className="critical-description">
+              </Typography>
+              <Typography
+                sx={{
+                  color: "text.secondary",
+                  fontSize: "0.875rem",
+                  lineHeight: 1.5,
+                }}
+              >
                 {vuln.description.slice(0, 150)}...
-              </div>
-            </div>
+              </Typography>
+            </Box>
           ))}
-        </div>
-      </div>
-    </div>
+        </Box>
+      </Card>
+    </Box>
   );
 }
 

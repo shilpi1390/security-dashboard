@@ -1,27 +1,29 @@
-import { useMemo } from 'react';
-import { useVulnerability } from '../context/VulnerabilityContext';
-import { getUniqueFilterValues } from '../utils/dataLoader';
-import { RotateCcw } from 'lucide-react';
-import MultiSelectDropdown from './MultiSelectDropdown';
-import './FilterPanel.css';
+import { useMemo } from "react";
+import { useVulnerability } from "../context/VulnerabilityContext";
+import { getUniqueFilterValues } from "../utils/dataLoader";
+import { getSeverityColor } from "../theme";
+import { RotateCcw } from "lucide-react";
+import MultiSelectDropdown from "./MultiSelectDropdown";
+import { Box, Typography, Button, Paper } from "@mui/material";
 
 function FilterPanel() {
-  const { allVulnerabilities, filters, setFilters, resetFilters } = useVulnerability();
+  const { allVulnerabilities, filters, setFilters, resetFilters } =
+    useVulnerability();
 
   const uniqueValues = useMemo(
     () => getUniqueFilterValues(allVulnerabilities),
-    [allVulnerabilities]
+    [allVulnerabilities],
   );
 
   const statusOptions = [
-    'Fixed',
-    'Affected',
-    'Open',
-    'Under Investigation',
-    'No Status',
-    'Will Not Fix',
-    'Needed',
-    'Deferred',
+    "Fixed",
+    "Affected",
+    "Open",
+    "Under Investigation",
+    "No Status",
+    "Will Not Fix",
+    "Needed",
+    "Deferred",
   ];
 
   const hasActiveFilters =
@@ -31,26 +33,81 @@ function FilterPanel() {
     filters.status.length > 0;
 
   return (
-    <div className="filter-panel">
-      <div className="filter-header">
-        <h3>Advanced Filters</h3>
+    <Paper
+      elevation={0}
+      sx={{
+        p: 3,
+        backgroundColor: "background.paper",
+        border: "1px solid",
+        borderColor: "divider",
+        borderRadius: 3,
+        marginBottom: 4,
+      }}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
+        <Typography variant="h6" component="h3" sx={{ fontWeight: 600 }}>
+          Advanced Filters
+        </Typography>
         {hasActiveFilters && (
-          <button className="btn btn-ghost btn-sm" onClick={resetFilters}>
-            <RotateCcw size={16} />
+          <Button
+            variant="text"
+            size="small"
+            startIcon={<RotateCcw size={16} />}
+            onClick={resetFilters}
+            sx={{
+              color: "text.secondary",
+              "&:hover": {
+                backgroundColor: "rgba(139, 92, 246, 0.08)",
+                color: "primary.main",
+              },
+            }}
+          >
             Reset
-          </button>
+          </Button>
         )}
-      </div>
+      </Box>
 
-      <div className="filter-sections">
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+          gap: 2,
+        }}
+      >
         <MultiSelectDropdown
           label="Severity"
           options={uniqueValues.severities}
           selectedValues={filters.severity}
-          onChange={(values) => setFilters({ ...filters, severity: values as any })}
-          placeholder="Select severity levels..."
+          onChange={(values) =>
+            setFilters({ ...filters, severity: values as any })
+          }
+          // placeholder="Select severity levels..."
           renderOption={(severity) => (
-            <span className={`badge badge-${severity}`}>{severity}</span>
+            <Box
+              component="span"
+              sx={{
+                display: "inline-flex",
+                alignItems: "center",
+                padding: "2px 8px",
+                borderRadius: 1,
+                fontSize: "0.75rem",
+                fontWeight: 600,
+                textTransform: "uppercase",
+                letterSpacing: "0.025em",
+                backgroundColor: `${getSeverityColor(severity)}15`,
+                color: getSeverityColor(severity),
+                border: `1px solid ${getSeverityColor(severity)}`,
+              }}
+            >
+              {severity}
+            </Box>
           )}
         />
 
@@ -74,11 +131,13 @@ function FilterPanel() {
           label="Status"
           options={statusOptions}
           selectedValues={filters.status}
-          onChange={(values) => setFilters({ ...filters, status: values as any })}
+          onChange={(values) =>
+            setFilters({ ...filters, status: values as any })
+          }
           placeholder="Select vulnerability status..."
         />
-      </div>
-    </div>
+      </Box>
+    </Paper>
   );
 }
 

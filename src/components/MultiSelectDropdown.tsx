@@ -1,6 +1,17 @@
-import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, X, Check } from 'lucide-react';
-import './MultiSelectDropdown.css';
+import { useState } from "react";
+import {
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Chip,
+  Box,
+  Checkbox,
+  ListItemText,
+  OutlinedInput,
+} from "@mui/material";
+import type { SelectChangeEvent } from "@mui/material";
+import { X } from "lucide-react";
 
 interface MultiSelectDropdownProps {
   label: string;
@@ -17,127 +28,120 @@ function MultiSelectDropdown({
   options,
   selectedValues,
   onChange,
-  placeholder = 'Select...',
+  placeholder = "Select...",
   renderOption,
-  maxHeight = 300,
 }: MultiSelectDropdownProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [isFocused, setIsFocused] = useState(false);
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen]);
-
-  const toggleOption = (option: string) => {
-    const newValues = selectedValues.includes(option)
-      ? selectedValues.filter((v) => v !== option)
-      : [...selectedValues, option];
-    onChange(newValues);
+  const handleChange = (event: SelectChangeEvent<string[]>) => {
+    const value = event.target.value;
+    onChange(typeof value === "string" ? value.split(",") : value);
   };
 
-  const clearAll = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onChange([]);
+  const handleDelete = (valueToDelete: string) => {
+    onChange(selectedValues.filter((value) => value !== valueToDelete));
   };
 
-  const selectAll = () => {
-    onChange([...options]);
-  };
+  const shouldShrink = isFocused || selectedValues.length > 0;
 
   return (
-    <div className="multiselect-container" ref={dropdownRef}>
-      <label className="multiselect-label">{label}</label>
-
-      <div className="multiselect-input-wrapper" onClick={() => setIsOpen(!isOpen)}>
-        <div className="multiselect-input">
-          {selectedValues.length === 0 ? (
-            <span className="multiselect-placeholder">{placeholder}</span>
-          ) : (
-            <div className="multiselect-tags">
-              {selectedValues.map((value) => (
-                <span key={value} className="multiselect-tag">
-                  {renderOption ? renderOption(value) : value}
-                  <button
-                    className="multiselect-tag-remove"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleOption(value);
-                    }}
-                  >
-                    <X size={14} />
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-        <div className="multiselect-actions">
-          {selectedValues.length > 0 && (
-            <button className="multiselect-clear" onClick={clearAll} title="Clear all">
-              <X size={16} />
-            </button>
-          )}
-          <ChevronDown
-            className={`multiselect-chevron ${isOpen ? 'open' : ''}`}
-            size={20}
+    <FormControl fullWidth size="small">
+      <InputLabel
+        id={`${label}-label`}
+        shrink={shouldShrink}
+      >
+        {label}
+      </InputLabel>
+      <Select
+        labelId={`${label}-label`}
+        multiple
+        value={selectedValues}
+        onChange={handleChange}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
+        input={
+          <OutlinedInput
+            label={shouldShrink ? label : ""}
+            notched={shouldShrink}
           />
-        </div>
-      </div>
-
-      {isOpen && (
-        <div className="multiselect-dropdown" style={{ maxHeight }}>
-          <div className="multiselect-dropdown-header">
-            <button
-              className="multiselect-dropdown-action"
-              onClick={selectAll}
-              disabled={selectedValues.length === options.length}
-            >
-              Select All
-            </button>
-            <button
-              className="multiselect-dropdown-action"
-              onClick={() => onChange([])}
-              disabled={selectedValues.length === 0}
-            >
-              Clear All
-            </button>
-          </div>
-
-          <div className="multiselect-options">
-            {options.map((option) => {
-              const isSelected = selectedValues.includes(option);
-              return (
-                <div
-                  key={option}
-                  className={`multiselect-option ${isSelected ? 'selected' : ''}`}
-                  onClick={() => toggleOption(option)}
-                >
-                  <div className="multiselect-checkbox">
-                    {isSelected && <Check size={16} />}
-                  </div>
-                  <div className="multiselect-option-label">
-                    {renderOption ? renderOption(option) : option}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-    </div>
+        }
+        renderValue={(selected) => (
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+            {selected.map((value) => (
+              <Chip
+                key={value}
+                label={renderOption ? renderOption(value) : value}
+                size="small"
+                onDelete={() => handleDelete(value)}
+                onMouseDown={(event) => {
+                  event.stopPropagation();
+                }}
+                deleteIcon={
+                  <X
+                    size={14}
+                    onMouseDown={(event) => event.stopPropagation()}
+                  />
+                }
+                sx={{
+                  height: 24,
+                  color: "primary.main",
+                  borderRadius: 1,
+                  fontWeight: 500,
+                  fontSize: "0.75rem",
+                  "& .MuiChip-deleteIcon": {
+                    color: "primary.main",
+                    "&:hover": {
+                      color: "primary.dark",
+                    },
+                  },
+                }}
+              />
+            ))}
+          </Box>
+        )}
+        MenuProps={{
+          PaperProps: {
+            style: {
+              maxHeight: 300,
+            },
+          },
+        }}
+        displayEmpty
+        sx={{
+          "& .MuiSelect-select": {
+            minHeight: "40px",
+          },
+        }}
+      >
+        {selectedValues.length === 0 && (
+          <MenuItem disabled value="">
+            <em>{placeholder}</em>
+          </MenuItem>
+        )}
+        {options.map((option) => (
+          <MenuItem key={option} value={option}>
+            <Checkbox
+              checked={selectedValues.includes(option)}
+              size="small"
+              sx={{
+                color: "text.secondary",
+                "&.Mui-checked": {
+                  color: "primary.main",
+                },
+              }}
+            />
+            <ListItemText
+              primary={renderOption ? renderOption(option) : option}
+              slotProps={{
+                primary: {
+                  fontSize: "0.875rem",
+                },
+              }}
+            />
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
   );
 }
 

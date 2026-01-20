@@ -1,7 +1,10 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
 import { VulnerabilityProvider } from './context/VulnerabilityContext';
+import { theme } from './theme';
 import Layout from './components/Layout';
 import LoadingSpinner from './components/LoadingSpinner';
 import './App.css';
@@ -24,23 +27,26 @@ const queryClient = new QueryClient({
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <VulnerabilityProvider>
-        <Router>
-          <Suspense fallback={<LoadingSpinner />}>
-            <Routes>
-              <Route path="/" element={<Layout />}>
-                <Route index element={<Navigate to="/dashboard" replace />} />
-                <Route path="dashboard" element={<Dashboard />} />
-                <Route path="vulnerabilities" element={<VulnerabilityList />} />
-                <Route path="vulnerabilities/:id" element={<VulnerabilityDetail />} />
-                <Route path="comparison" element={<Comparison />} />
-              </Route>
-            </Routes>
-          </Suspense>
-        </Router>
-      </VulnerabilityProvider>
-    </QueryClientProvider>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <QueryClientProvider client={queryClient}>
+        <VulnerabilityProvider>
+          <Router>
+            <Suspense fallback={<LoadingSpinner />}>
+              <Routes>
+                <Route path="/" element={<Layout />}>
+                  <Route index element={<Navigate to="/dashboard" replace />} />
+                  <Route path="dashboard" element={<Dashboard />} />
+                  <Route path="vulnerabilities" element={<VulnerabilityList />} />
+                  <Route path="vulnerabilities/:id" element={<VulnerabilityDetail />} />
+                  <Route path="comparison" element={<Comparison />} />
+                </Route>
+              </Routes>
+            </Suspense>
+          </Router>
+        </VulnerabilityProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 
