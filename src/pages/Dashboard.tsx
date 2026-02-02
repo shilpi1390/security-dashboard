@@ -47,7 +47,6 @@ function Dashboard() {
     isLoading,
     error,
     allVulnerabilities,
-    filteredVulnerabilities,
     analysisMode,
     setAnalysisMode,
     filters,
@@ -163,7 +162,7 @@ function Dashboard() {
   const monthlyTrend = useMemo(() => {
     const monthCounts = new Map<string, number>();
 
-    filteredVulnerabilities.forEach((vuln) => {
+    allVulnerabilities.forEach((vuln) => {
       const date = new Date(vuln.published);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
       monthCounts.set(monthKey, (monthCounts.get(monthKey) || 0) + 1);
@@ -173,7 +172,7 @@ function Dashboard() {
       .sort(([a], [b]) => a.localeCompare(b))
       .slice(-12)
       .map(([month, count]) => ({ month, count }));
-  }, [filteredVulnerabilities]);
+  }, [allVulnerabilities]);
 
   // Click handlers for interactive charts
   const handleSeverityClick = (data: any) => {
@@ -745,7 +744,7 @@ function Dashboard() {
               Click on a point to filter vulnerabilities by month
             </Typography>
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={monthlyTrend} onClick={handleTrendClick}>
+              <LineChart data={monthlyTrend}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#3c4257" />
                 <XAxis dataKey="month" stroke="#9aa0a6" />
                 <YAxis stroke="#9aa0a6" />
@@ -762,7 +761,16 @@ function Dashboard() {
                   stroke="#8b5cf6"
                   strokeWidth={2}
                   dot={{ fill: "#8b5cf6", r: 4, cursor: "pointer" }}
-                  activeDot={{ r: 6, cursor: "pointer" }}
+                  activeDot={(props: any) => (
+                    <circle
+                      cx={props.cx}
+                      cy={props.cy}
+                      r={6}
+                      fill="#8b5cf6"
+                      cursor="pointer"
+                      onClick={() => handleTrendClick(props.payload)}
+                    />
+                  )}
                 />
               </LineChart>
             </ResponsiveContainer>

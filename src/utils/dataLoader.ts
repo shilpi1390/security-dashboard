@@ -69,8 +69,9 @@ export async function loadVulnerabilityData(
       chunks.push(value);
       receivedLength += value.length;
 
+
       if (onProgress && total > 0) {
-        onProgress((receivedLength / total) * 100);
+        onProgress((receivedLength / total) * 100); // Update progress bar
       }
     }
 

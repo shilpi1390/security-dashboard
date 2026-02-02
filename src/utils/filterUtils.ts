@@ -11,6 +11,7 @@ export function applyFilters(
     // Search query filter
     if (filters.searchQuery) {
       const query = filters.searchQuery.toLowerCase();
+
       const searchableFields = [
         vuln.cve,
         vuln.packageName,
